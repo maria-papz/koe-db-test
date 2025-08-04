@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}
+    View Table - {{ table_name }}
+{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>View Table - {{ table_name }}</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
+    <script>
+        function expandColumn(fieldName) {
+            var elements = document.querySelectorAll('.expandable-' + fieldName);
+            elements.forEach(function(element) {
+                if (element.style.display === "none") {
+                    element.style.display = "block";
+                } else {
+                    element.style.display = "none";
+                }
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>View Table - {{ table_name }}</h1>
+    <a href="{% url 'homepage' %}"><button>Back to Homepage</button></a>
+    <a href="?download=csv"><button>Download CSV</button></a>
+    <table>
+        <thead>
+            <tr>
+                {% for field in columns %}
+                    <th>
+                        {{ field.verbose_name }}
+                        {% if field.is_relation %}
+                            <button type="button" onclick="expandColumn('{{ field.name }}')">Expand/Collapse</button>
+                        {% endif %}
+                    </th>
+                {% endfor %}
+                {% if can_change or can_delete %}
+                    <th>Actions</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+                <tr>
+                    {% for field_name, value, related_fields in row %}
+                        <td>
+                            {{ value }}
+                            {% if related_fields %}
+                                <div class="expandable-{{ field_name }}" style="display:none">
+                                    <ul>
+                                        {% for related_field, related_value in related_fields.items %}
+                                            <li>{{ related_field }}: {{ related_value }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                    {% if can_change or can_delete %}
+                        <td>
+                            {% if can_delete %}
+                                <form method="post" action="">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="id" value="{{ row.0.1 }}">
+                                    <input type="hidden" name="operation" value="delete">
+                                    <button type="submit">Delete</button>
+                                </form>
+                            {% endif %}
+                            {% if can_change %}
+                                <form method="post" action="">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="id" value="{{ row.0.1 }}">
+                                    <input type="hidden" name="operation" value="edit">
+                                    <button type="submit">Edit</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Pagination Controls -->
+    <div class="pagination">
+        <span class="step-links">
+            {% if rows.has_previous %}
+                <a href="?page=1">&laquo; first</a>
+                <a href="?page={{ rows.previous_page_number }}">previous</a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ rows.number }} of {{ rows.paginator.num_pages }}.
+            </span>
+
+            {% if rows.has_next %}
+                <a href="?page={{ rows.next_page_number }}">next</a>
+                <a href="?page={{ rows.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+
+    {% if can_add %}
+        <h2>{{ operation|default:"Add" | capfirst }} Record</h2>
+        <form method="post" action="">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <input type="hidden" name="operation" value="{{ operation|default:"add" }}">
+            {% if record_id %}
+                <input type="hidden" name="id" value="{{ record_id }}">
+            {% endif %}
+            <button type="submit">{{ operation|default:"add" | capfirst }}</button>
+        </form>
+    {% endif %}
+
+    {% if can_request_view or can_request_add or can_request_change or can_request_delete %}
+        <h2>Request Permissions</h2>
+        <form method="post" action="">
+            {% csrf_token %}
+            {% if can_request_view %}
+                <button type="submit" name="request_permission" value="view">Request View Permission</button>
+            {% endif %}
+            {% if can_request_add %}
+                <button type="submit" name="request_permission" value="add">Request Add Permission</button>
+            {% endif %}
+            {% if can_request_change %}
+                <button type="submit" name="request_permission" value="change">Request Change Permission</button>
+            {% endif %}
+            {% if can_request_delete %}
+                <button type="submit" name="request_permission" value="delete">Request Delete Permission</button>
+            {% endif %}
+        </form>
+    {% endif %}
+
+    {% if permission_requested %}
+        <p>Requested {{ requested_permission_type }} permission.</p>
+    {% endif %}
+</body>
+</html>
+{% endblock %}

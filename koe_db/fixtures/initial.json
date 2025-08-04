@@ -1,0 +1,206 @@
+[
+  {
+    "model": "koe_db.country",
+    "pk": 1,
+    "fields": {
+      "name": "United States",
+      "iso_code": "USA"
+    }
+  },
+  {
+    "model": "koe_db.country",
+    "pk": 2,
+    "fields": {
+      "name": "Germany",
+      "iso_code": "DEU"
+    }
+  },
+  {
+    "model": "koe_db.country",
+    "pk": 3,
+    "fields": {
+      "name": "Japan",
+      "iso_code": "JPN"
+    }
+  },
+  {
+    "model": "koe_db.indicator",
+    "pk": 1,
+    "fields": {
+      "name": "GDP",
+      "description": "Gross Domestic Product"
+    }
+  },
+  {
+    "model": "koe_db.indicator",
+    "pk": 2,
+    "fields": {
+      "name": "Unemployment Rate",
+      "description": "Percentage of unemployed people"
+    }
+  },
+  {
+    "model": "koe_db.indicator",
+    "pk": 3,
+    "fields": {
+      "name": "Inflation Rate",
+      "description": "Percentage increase in the price of goods and services"
+    }
+  },
+  {
+    "model": "koe_db.countryindicator",
+    "pk": 1,
+    "fields": {
+      "country": 1,
+      "indicator": 1,
+      "year": 2023,
+      "value": 21433.22
+    }
+  },
+  {
+    "model": "koe_db.countryindicator",
+    "pk": 2,
+    "fields": {
+      "country": 1,
+      "indicator": 2,
+      "year": 2023,
+      "value": 3.7
+    }
+  },
+  {
+    "model": "koe_db.countryindicator",
+    "pk": 3,
+    "fields": {
+      "country": 2,
+      "indicator": 1,
+      "year": 2023,
+      "value": 3845.63
+    }
+  },
+  {
+    "model": "koe_db.countryindicator",
+    "pk": 4,
+    "fields": {
+      "country": 2,
+      "indicator": 3,
+      "year": 2023,
+      "value": 1.5
+    }
+  },
+  {
+    "model": "koe_db.countryindicator",
+    "pk": 5,
+    "fields": {
+      "country": 3,
+      "indicator": 2,
+      "year": 2023,
+      "value": 2.8
+    }
+  },
+  {
+    "model": "koe_db.countryindicator",
+    "pk": 6,
+    "fields": {
+      "country": 3,
+      "indicator": 3,
+      "year": 2023,
+      "value": 0.7
+    }
+  },
+  {
+    "model": "koe_db.researcher",
+    "pk": 1,
+    "fields": {
+      "name": "Dr. Alice Smith",
+      "affiliation": "Economic Research Institute"
+    }
+  },
+  {
+    "model": "koe_db.researcher",
+    "pk": 2,
+    "fields": {
+      "name": "Dr. Bob Johnson",
+      "affiliation": "University of Economics"
+    }
+  },
+  {
+    "model": "koe_db.researcher",
+    "pk": 3,
+    "fields": {
+      "name": "Dr. Charlie Brown",
+      "affiliation": "Global Economic Forum"
+    }
+  },
+  {
+    "model": "koe_db.researchpaper",
+    "pk": 1,
+    "fields": {
+      "title": "The Impact of GDP on Employment Rates",
+      "publication_year": 2022
+    }
+  },
+  {
+    "model": "koe_db.researchpaper",
+    "pk": 2,
+    "fields": {
+      "title": "Inflation Trends in Developed Countries",
+      "publication_year": 2023
+    }
+  },
+  {
+    "model": "koe_db.researchpaper",
+    "pk": 3,
+    "fields": {
+      "title": "Economic Growth and Technological Advancements",
+      "publication_year": 2021
+    }
+  },
+  {
+    "model": "koe_db.researchpaperauthor",
+    "pk": 1,
+    "fields": {
+      "research_paper": 1,
+      "researcher": 1
+    }
+  },
+  {
+    "model": "koe_db.researchpaperauthor",
+    "pk": 2,
+    "fields": {
+      "research_paper": 1,
+      "researcher": 2
+    }
+  },
+  {
+    "model": "koe_db.researchpaperauthor",
+    "pk": 3,
+    "fields": {
+      "research_paper": 2,
+      "researcher": 2
+    }
+  },
+  {
+    "model": "koe_db.researchpaperauthor",
+    "pk": 4,
+    "fields": {
+      "research_paper": 2,
+      "researcher": 3
+    }
+  },
+  {
+    "model": "koe_db.researchpaperauthor",
+    "pk": 5,
+    "fields": {
+      "research_paper": 3,
+      "researcher": 1
+    }
+  },
+  {
+    "model": "koe_db.researchpaperauthor",
+    "pk": 6,
+    "fields": {
+      "research_paper": 3,
+      "researcher": 3
+    }
+  }
+]

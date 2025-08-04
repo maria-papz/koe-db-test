@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Home Page
+{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search Page</title>
+    <script>
+        function toggleAdvancedSearch() {
+            var advancedSearchDiv = document.getElementById('advanced-search');
+            if (advancedSearchDiv.style.display === 'none') {
+                advancedSearchDiv.style.display = 'block';
+            } else {
+                advancedSearchDiv.style.display = 'none';
+            }
+        }
+
+        function addRow() {
+            var searchRows = document.getElementById('search-rows');
+            var newRow = document.createElement('div');
+            newRow.className = 'search-row';
+            newRow.innerHTML = `
+                <select name="boolean">
+                    <option value="AND">AND</option>
+                    <option value="OR">OR</option>
+                    <option value="NOT">NOT</option>
+                </select>
+                <select name="field">
+                    {% for field_choice in advanced_form.fields.field.choices %}
+                        <option value="{{ field_choice.0 }}">{{ field_choice.1 }}</option>
+                    {% endfor %}
+                </select>
+                <input type="text" name="value" required />
+                <button type="button" onclick="removeRow(this)">X</button>
+            `;
+            searchRows.appendChild(newRow);
+        }
+
+        function removeRow(button) {
+            var row = button.parentElement;
+            row.parentElement.removeChild(row);
+        }
+    </script>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h1>Search Page</h1>
+    <a href="{% url 'all_tables' %}"><button>View All Tables</button></a>  <!-- New link to view all tables -->
+
+    <h2>Simple Search</h2>
+    <form method="get" action="">
+        {{ simple_form.as_p }}
+        <button type="submit">Search</button>
+    </form>
+
+    <h2>Advanced Record Search</h2>
+    <button type="button" onclick="toggleAdvancedSearch()">Show Advanced Search</button>
+    <div id="advanced-search" style="display: none;">
+        <form method="post" action="">
+            {% csrf_token %}
+            <div id="search-rows">
+                <div class="search-row">
+                    <select name="field">
+                        {% for field_choice in advanced_form.fields.field.choices %}
+                            <option value="{{ field_choice.0 }}">{{ field_choice.1 }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="text" name="value" required />
+                </div>
+            </div>
+            <button type="button" onclick="addRow()">+ Add Row</button>
+            <button type="submit">Search</button>
+        </form>
+    </div>
+
+    <h2>Search Results</h2>
+    {% for model_name, model_data in grouped_results.items %}
+    <h3> <a href="{% url 'view_table' model_name %}">{{ model_data.verbose_name }}</a></h3>
+    <table>
+        <thead>
+            <tr>
+                {% for field in model_data.records.0.keys %}
+                <th>{{ field }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in model_data.records %}
+            <tr>
+                {% for field, value in record.items %}
+                <td>{{ value }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endfor %}
+</body>
+</html>
+{% endblock %}

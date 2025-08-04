@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Error
+{% endblock %}
+
+{% block content %}
+<h1>Error</h1>
+<p>{{ message }}</p>
+
+{% if request_permission %}
+    <form method="post" action="{% url 'view_table' table_name %}">
+        {% csrf_token %}
+        <input type="hidden" name="request_permission" value="view">
+        <button type="submit">Request View Permission</button>
+    </form>
+{% endif %}
+
+{% if requested_permission %}
+    <p>Your request for permission has been submitted.</p>
+{% endif %}
+{% endblock %}

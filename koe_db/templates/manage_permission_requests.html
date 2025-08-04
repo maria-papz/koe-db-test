@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Manage Permission Requests
+{% endblock %}
+
+{% block content %}
+<h1>Manage Permission Requests</h1>
+<table>
+    <thead>
+        <tr>
+            <th>User</th>
+            <th>Model</th>
+            <th>Permission</th>
+            <th>Request Date</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for request in requests %}
+        <tr>
+            <td>{{ request.user.username }}</td>
+            <td>{{ request.model_name }}</td>
+            <td>{{ request.permission_type }}</td>
+            <td>{{ request.request_date }}</td>
+            <td>
+                <form method="post" action="">
+                    {% csrf_token %}
+                    <input type="hidden" name="request_id" value="{{ request.id }}">
+                    <button type="submit" name="action" value="approve">Approve</button>
+                    <button type="submit" name="action" value="deny">Deny</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

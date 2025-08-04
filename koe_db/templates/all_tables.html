@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}
+    All Tables
+{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>All Tables</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h1>All Tables</h1>
+    <button onclick="history.back()">Back</button> <!-- Back button using JavaScript -->
+    <table>
+        <thead>
+            <tr>
+                <th>Table Name</th>
+                <th>Verbose Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for table in tables %}
+            <tr>
+                <td><a href="{% url 'view_table' table.name %}">{{ table.name }}</a></td>
+                <td>{{ table.verbose_name }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
+{% endblock %}
