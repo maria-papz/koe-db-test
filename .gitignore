@@ -180,3 +180,9 @@ cython_debug/
 *.sqlite
 db.sqlite3
 db.sqlite
+# Database files
+*.sqlite3
+*.sqlite
+*.db
+db.sqlite3
+db.sqlitee3
