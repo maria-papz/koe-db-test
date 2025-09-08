@@ -176,3 +176,7 @@ cython_debug/
 
 .vscode
 .DS_Store
+*.sqlite3
+*.sqlite
+db.sqlite3
+db.sqlite
