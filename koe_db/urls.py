@@ -53,7 +53,7 @@ urlpatterns = [
 
     # Add these new endpoints
     path('api/indicators/<str:indicator_id>/permissions/', api_views.manage_indicator_permissions, name='indicator_permissions'),
-    path('api/users/', api_views.get_users, name='get_users'),
+    path('api/users/list/', api_views.get_users, name='get_users'),
 
     # Add the new user activity endpoint
     path('api/users/<str:user_id>/activity/', api_views.user_activity, name='user_activity'),
