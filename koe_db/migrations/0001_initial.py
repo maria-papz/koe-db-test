@@ -77,6 +77,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'abstract': False,
+                'swappable': 'AUTH_USER_MODEL'
             },
         ),
         migrations.CreateModel(
