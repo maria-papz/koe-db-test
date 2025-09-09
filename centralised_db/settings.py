@@ -201,8 +201,6 @@ else:
 
 AUTHENTICATION_BACKENDS = [
     'social_core.backends.google.GoogleOAuth2',
-    'social_core.backends.facebook.FacebookOAuth2',
-    'social_core.backends.microsoft.MicrosoftOAuth2',
     'django.contrib.auth.backends.ModelBackend',
     'guardian.backends.ObjectPermissionBackend',
 ]
@@ -240,18 +238,6 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = getenv('GOOGLE_AUTH_KEY')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = getenv('GOOGLE_AUTH_SECRET')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = ['https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile', 'openid']
 SOCIAL_AUTH_GOOGLE_OAUTH2_EXTRA_DATA = ['first_name', 'last_name']
-
-SOCIAL_AUTH_FACEBOOK_KEY = getenv('FACEBOOK_AUTH_KEY')
-SOCIAL_AUTH_FACEBOOK_SECRET = getenv('FACEBOOK_AUTH_SECRET')
-SOCIAL_AUTH_FACEBOOK_SCOPE = ['email']
-SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
-    'fields': 'email, first_name, last_name'
-}
-
-SOCIAL_AUTH_MICROSOFT_KEY = getenv('MICROSOFT_AUTH_KEY')
-SOCIAL_AUTH_MICROSOFT_SECRET = getenv('MICROSOFT_AUTH_SECRET')
-SOCIAL_AUTH_MICROSOFT_SCOPE = ['User.Read']
-SOCIAL_AUTH_MICROSOFT_EXTRA_DATA = ['first_name', 'last_name']
 
 
 # Email settings
@@ -322,8 +308,9 @@ CELERY_TASK_ROUTES = {
     'koe_db.tasks.execute_eurostat_request': {'queue': 'workflow_queue'},
 }
 
+REDIS_URL = getenv("REDIS_URL", "redis://127.0.0.1:6379")
 
-CELERY_BROKER_URL = 'redis://127.0.0.1:6379'
+CELERY_BROKER_URL = REDIS_URL
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_SERIALIZER = 'json'
@@ -336,12 +323,13 @@ CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 # REDIS CACHE
 
+
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": f"redis://127.0.0.1:6379/1",
+        "LOCATION": f"{REDIS_URL}/1",
         "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        },
+            "CLIENT_CLASS": "django_redis.client.DefaultClient"
+            },
     }
 }
