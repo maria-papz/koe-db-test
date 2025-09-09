@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 from os import getenv, path
+import ssl
 from venv import logger
 import dotenv
 from django.core.management.utils import get_random_secret_key
@@ -311,6 +312,10 @@ CELERY_TASK_ROUTES = {
 REDIS_URL = getenv("REDIS_URL", "redis://127.0.0.1:6379")
 
 CELERY_BROKER_URL = REDIS_URL
+broker_use_ssl = None
+if REDIS_URL.startswith("rediss://"):
+    broker_use_ssl = {"ssl_cert_reqs": ssl.CERT_NONE}
+CELERY_BROKER_USE_SSL = broker_use_ssl
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_SERIALIZER = 'json'
@@ -329,7 +334,8 @@ CACHES = {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": f"{REDIS_URL}/1",
         "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient"
-            },
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "CONNECTION_POOL_KWARGS": {"ssl_cert_reqs": None} if REDIS_URL.startswith("rediss://") else {},
+        },
     }
 }
