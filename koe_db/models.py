@@ -303,7 +303,7 @@ class WorkflowRun(models.Model):
     start_time = models.DateTimeField(null=True, blank=True)  # Start time of the workflow execution
     end_time = models.DateTimeField(null=True, blank=True)  # End time of the workflow execution
     def __str__(self):
-        return f"Run for {self.workflow.indicator.name} at {self.run_time}"
+        return f"Run for {self.workflow.name} at {self.run_time}"
 
 
 class ECBRequest(models.Model):

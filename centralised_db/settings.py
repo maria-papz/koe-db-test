@@ -65,6 +65,7 @@ LOGIN_URL = 'login'
 # Application definition
 
 INSTALLED_APPS = [
+    'koe_db',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -73,7 +74,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # 'theme',
     # 'django_browser_reload',
-    'koe_db',
     'rest_framework',
     'corsheaders',
     'djoser',
