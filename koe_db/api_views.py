@@ -536,7 +536,7 @@ def add_view_indicators(request):
             base_year = data.get('base_year')
             unit_id = data.get('unit')
             other_frequency = data.get('other_frequency', None)
-
+            source = data.get('source', 'manual entry')
             seasonally_adjusted = data.get('seasonally_adjusted') == 'true'
             frequency = data.get('frequency')
             is_custom = data.get('is_custom') == 'true'
@@ -557,6 +557,7 @@ def add_view_indicators(request):
                     country=country,
                     region=region,
                     base_year=base_year,
+                    source=source,
                     seasonally_adjusted=seasonally_adjusted,
                     frequency=frequency,
                     is_custom=is_custom,
@@ -987,6 +988,7 @@ def indicators(request, id):
                 'code': old_indicator.code,
                 'description': old_indicator.description,
                 'base_year': old_indicator.base_year,
+                'source': old_indicator.source,
                 'seasonally_adjusted': old_indicator.seasonally_adjusted,
                 'frequency': old_indicator.frequency,
                 'other_frequency': old_indicator.other_frequency,
@@ -1014,17 +1016,17 @@ def indicators(request, id):
                 other_frequency = data.get('other_frequency', None)
             is_custom = data.get('is_custom', indicator.is_custom)
             current_prices = data.get('current_prices', indicator.currentPrices)
-
+            source = data.get('source')
             category_name = data.get('category')
             country_name = data.get('country')
             region_name = data.get('region')
             unit_name = data.get('unit')
 
 
-            category = Category.objects.get(name=category_name) if category_name else indicator.category
-            country = Country.objects.get(name=country_name) if country_name else indicator.country
-            region = Region.objects.get(name=region_name) if region_name else indicator.region
-            unit = Unit.objects.get(name=unit_name) if unit_name else indicator.unit
+            category = Category.objects.filter(name=category_name).first() if category_name else indicator.category
+            country = Country.objects.filter(name=country_name).first() if country_name else indicator.country
+            region = Region.objects.filter(name=region_name).first() if region_name else indicator.region
+            unit = Unit.objects.filter(name=unit_name).first() if unit_name else indicator.unit
 
 
             indicator.name = name
@@ -1037,6 +1039,7 @@ def indicators(request, id):
             indicator.currentPrices = (current_prices == 'true')
             indicator.category = category
             indicator.unit = unit
+            indicator.source = source
             indicator.other_frequency = other_frequency
 
             # Decide how to handle country/region
