@@ -7,6 +7,7 @@ from koe_db.models import EuroStatRequest, Workflow, CyStatRequest, CyStatIndica
 from django.utils import timezone
 from django.db import transaction
 from decimal import Decimal
+from koe_db.api_views import update_dependent_custom_indicators
 
 @shared_task
 def execute_cystat_request(cystat_request_id):
@@ -178,6 +179,8 @@ def execute_cystat_request(cystat_request_id):
 
             # Now create one ActionLog per indicator with all its changes
             for indicator_id, changes in indicator_changes.items():
+                indicator = Indicator.objects.get(id=indicator_id)
+
                 ActionLog.objects.create(
                     user=None,
                     indicator_id=indicator_id,
@@ -185,6 +188,10 @@ def execute_cystat_request(cystat_request_id):
                     action_type='DATA_UPDATE',
                     details=changes  # This must be a list of change objects for indicator_history
                 )
+                # Update dependent custom indicators
+                if changes:  # Only update if there were actual changes
+                    update_dependent_custom_indicators(indicator, None)
+
 
             # Mark workflow as completed
             workflow_run.status = "COMPLETED"
@@ -377,6 +384,9 @@ def execute_ecb_request(ecb_request_id):
                     details=indicator_changes
                 )
                 print(f"Created action log with {len(indicator_changes)} changes for indicator {indicator.name}")
+
+                # Update dependent custom indicators
+                update_dependent_custom_indicators(indicator, None)
 
             # Mark workflow as completed
             workflow_run.status = "COMPLETED"
@@ -643,6 +653,7 @@ def execute_eurostat_request(eurostat_request_id):
                                 indicator_changes.setdefault(indicator.id, []).append(change)
 
                         # Create an ActionLog for this indicator
+
                         if indicator_changes:
                             ActionLog.objects.create(
                                 user=None,
@@ -651,6 +662,8 @@ def execute_eurostat_request(eurostat_request_id):
                                 action_type='DATA_UPDATE',
                                 details=indicator_changes[indicator.id]  # This must be a list of change objects for indicator_history
                             )
+                            # Update dependent custom indicators
+                            update_dependent_custom_indicators(indicator, None)
                         # Mark workflow as completed
                         if workflow_run:
                             workflow_run.status = "COMPLETED"
