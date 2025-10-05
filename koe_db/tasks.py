@@ -89,9 +89,24 @@ def execute_cystat_request(cystat_request_id):
 
         # Parse the response data
         data = response_data.get("data", [])
+        columns = response_data.get("columns", [])
         print(f"Processing data for workflow: {cystat_request.workflow.name}...")
 
-        # Match the data to indicators using the mappings
+        # Create mapping from column codes to their positions in the key array
+        column_codes = []
+        content_variables = {}  # Maps content variable codes to their value index
+        content_variable_order = []  # Ordered list of content variable codes
+
+        for i, col in enumerate(columns):
+            if col.get("type") == "c":  # Content variable
+                content_variable_order.append(col["code"])
+                content_variables[col["code"]] = len(content_variable_order) - 1  # Index in values array
+            elif col.get("type") in ["t", "d"]:  # Time or dimension variable
+                column_codes.append(col["code"])
+
+        print(f"Column codes in key array: {column_codes}")
+        print(f"Content variables: {content_variables}")
+        print(f"Content variable order: {content_variable_order}")        # Match the data to indicators using the mappings
         with transaction.atomic():
             # Create a dictionary to collect changes by indicator
             indicator_changes = {}  # { indicator_id: [change1, change2, ...] }
@@ -107,14 +122,49 @@ def execute_cystat_request(cystat_request_id):
                     indicator = mapping.indicator
                     keys = mapping.key_indices  # Example: {"MEASURE": "1", "TYPE OF DATA": "1", "NA AGGREGATE": "9"}
 
-                    # Construct the expected key array based on variable order
+                    # Check if this mapping has a content variable and find the correct value index
+                    content_variable_code = None
+                    value_index = 0  # Default to first value
+
+                    # Look for content variables in the mapping
+                    for var_code, var_value in keys.items():
+                        if var_code not in column_codes and var_code not in ["QUARTER", "MONTH", "YEAR"]:
+                            # This variable is not in the key array, so it might be a content variable
+                            # Find if any content variable matches this variable's expected value
+                            for content_code in content_variable_order:
+                                if content_code == var_value:
+                                    content_variable_code = var_code
+                                    value_index = content_variables[content_code]
+                                    break
+                            if content_variable_code:
+                                break
+
+                    # If we have multiple content variables but no specific mapping found,
+                    # try to match the variable name to content variable codes
+                    if not content_variable_code and len(content_variable_order) > 1:
+                        for var_code, var_value in keys.items():
+                            if var_code not in column_codes and var_code not in ["QUARTER", "MONTH", "YEAR"]:
+                                # Check if the var_value (which should be an index) matches any content variable position
+                                try:
+                                    expected_index = int(var_value)
+                                    if 0 <= expected_index < len(content_variable_order):
+                                        content_variable_code = var_code
+                                        value_index = expected_index
+                                        break
+                                except (ValueError, TypeError):
+                                    continue
+
+                    # Construct the expected key array based on column order (excluding content variables)
                     expected_keys = []
+                    key_index = 0
+
                     for variable in variables:
                         variable_code = variable["code"]
                         if variable_code in ["QUARTER", "MONTH", "YEAR"]:
                             expected_keys.append("*")  # Wildcard for the period variable
-                        else:
-                            expected_keys.append(keys.get(variable_code,None))
+                        elif variable_code in column_codes:
+                            # This variable is indexed in the key array
+                            expected_keys.append(keys.get(variable_code, None))
                             if expected_keys[-1] is None:
                                 workflow_run.status = "FAILED"
                                 workflow_run.success = False
@@ -122,22 +172,29 @@ def execute_cystat_request(cystat_request_id):
                                 workflow_run.error_message = f"Variable code '{variable_code}' is no longer compatible. Please update workflow"
                                 workflow_run.save()
                                 return
+                        # Content variables are not added to expected_keys as they're not in the key array
 
                     # Check if the entry matches the indicator's keys
                     match = True
                     for i, key in enumerate(expected_keys):
                         if key == "*":  # Skip wildcard keys
                             continue
-                        if entry["key"][i] != key:
+                        if i >= len(entry["key"]) or entry["key"][i] != key:
                             match = False
                             break
 
                     if match:
+                        # value_index was already determined above in the content variable logic
+
                         # Convert value to Decimal
                         try:
-                            print(f"Attempting to convert value: {entry['values'][0]} for period {period} and key {entry['key']}")
-                            dec_value = Decimal(str(entry["values"][0]))
-                        except (ValueError, KeyError, IndexError, TypeError,decimal.ConversionSyntax, decimal.InvalidOperation):
+                            if value_index < len(entry["values"]):
+                                value_to_convert = entry["values"][value_index]
+                                print(f"Attempting to convert value: {value_to_convert} (index {value_index}) for period {period} and key {entry['key']}")
+                                dec_value = Decimal(str(value_to_convert))
+                            else:
+                                continue
+                        except (ValueError, KeyError, IndexError, TypeError, decimal.ConversionSyntax, decimal.InvalidOperation):
                             continue
 
                         # Find or create Data
