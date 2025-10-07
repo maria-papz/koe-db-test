@@ -360,8 +360,8 @@ class EuroStatRequest(models.Model):
     Stores information about a Eurostat data request workflow.
     """
     workflow = models.OneToOneField(Workflow, on_delete=models.CASCADE, related_name="eurostat_request")
-    url = models.URLField(help_text="The Eurostat API URL to fetch data from")
-    frequency = models.CharField(max_length=20, help_text="Data frequency (e.g., 'Annual', 'Monthly', 'Quarterly')")
+    url = models.URLField(max_length=2500, help_text="The Eurostat API URL to fetch data from")
+    frequency = models.CharField(max_length=50, help_text="Data frequency (e.g., 'Annual', 'Monthly', 'Quarterly')")
 
     def __str__(self):
         return f"Eurostat Request for {self.workflow.name}"
@@ -388,4 +388,4 @@ class EuroStatIndicatorMapping(models.Model):
         unique_together = ('eurostat_request', 'indicator')
 
     def __str__(self):
-        return f"{self.indicator.name} in {self.eurostat_request.dataset_code}"
+        return f"{self.indicator.name} in {self.eurostat_request.workflow.name}"
