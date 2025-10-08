@@ -1062,6 +1062,8 @@ def fetch_ecb_structure(request):
                     frequency = 'Quarterly'
                 elif time_format == 'P1M':
                     frequency = 'Monthly'
+                elif time_format == 'P1D':
+                    frequency = 'Daily'
 
             # Extract time periods
             periods = []
