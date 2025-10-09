@@ -106,7 +106,30 @@ def execute_cystat_request(cystat_request_id):
 
         print(f"Column codes in key array: {column_codes}")
         print(f"Content variables: {content_variables}")
-        print(f"Content variable order: {content_variable_order}")        # Match the data to indicators using the mappings
+        print(f"Content variable order: {content_variable_order}")
+
+        # Find the content variable in the structure data (from GET request)
+        # Content variables are those that appear in the GET response but not as dimension/time columns in POST response
+        content_variable_mapping = {}  # Maps content variable code to its meaning/text
+        content_variable_name = None
+
+        # Get all variable codes from GET response
+        get_variable_codes = [var.get("code") for var in variables]
+
+        # Find variables that are in GET response but not in POST column_codes (and not time variables)
+        for variable in variables:
+            var_code = variable.get("code")
+            if (var_code not in column_codes and
+                var_code not in ["QUARTER", "MONTH", "YEAR"] and
+                var_code is not None):
+                content_variable_name = var_code
+                # Map each value index to its corresponding text
+                for idx, value_text in enumerate(variable.get("valueTexts", [])):
+                    content_variable_mapping[str(idx)] = value_text
+                print(f"Found content variable mapping: {content_variable_name} -> {content_variable_mapping}")
+                break
+
+        # Match the data to indicators using the mappings
         with transaction.atomic():
             # Create a dictionary to collect changes by indicator
             indicator_changes = {}  # { indicator_id: [change1, change2, ...] }
@@ -122,34 +145,45 @@ def execute_cystat_request(cystat_request_id):
                     indicator = mapping.indicator
                     keys = mapping.key_indices  # Example: {"MEASURE": "1", "TYPE OF DATA": "1", "NA AGGREGATE": "9"}
 
-                    # Check if this mapping has a content variable and find the correct value index
-                    content_variable_code = None
+                    # Determine the correct value index for this indicator based on content variable mapping
                     value_index = 0  # Default to first value
 
-                    # Look for content variables in the mapping
-                    for var_code, var_value in keys.items():
-                        if var_code not in column_codes and var_code not in ["QUARTER", "MONTH", "YEAR"]:
-                            # This variable is not in the key array, so it might be a content variable
-                            # Find if any content variable matches this variable's expected value
-                            for content_code in content_variable_order:
-                                if content_code == var_value:
-                                    content_variable_code = var_code
-                                    value_index = content_variables[content_code]
-                                    break
-                            if content_variable_code:
-                                break
+                    # Look for the content variable in the mapping keys
+                    # The content variable name should match what we found in the structure
+                    if content_variable_name and content_variable_name in keys:
+                        # Get the value for the content variable from the mapping
+                        content_var_value = keys[content_variable_name]
 
-                    # If we have multiple content variables but no specific mapping found,
-                    # try to match the variable name to content variable codes
-                    if not content_variable_code and len(content_variable_order) > 1:
+                        # This value should correspond to an index in the content variable order
+                        # Find which content variable code this maps to
+                        try:
+                            # The content_var_value should be an index that maps to a content variable
+                            content_var_index = int(content_var_value)
+
+                            # Check if this index exists in our content variable mapping
+                            if str(content_var_index) in content_variable_mapping:
+                                # Find the position of this content variable in the response
+                                content_var_code_in_response = str(content_var_index)
+                                if content_var_code_in_response in content_variables:
+                                    value_index = content_variables[content_var_code_in_response]
+                                    print(f"Mapping indicator {indicator.name} to content variable index {value_index} (code: {content_var_code_in_response}, meaning: {content_variable_mapping.get(content_var_code_in_response, 'Unknown')})")
+                                else:
+                                    # If not found in response, use the index directly if it's valid
+                                    if 0 <= content_var_index < len(content_variable_order):
+                                        value_index = content_var_index
+                                        print(f"Using direct index {value_index} for indicator {indicator.name}")
+                        except (ValueError, TypeError):
+                            print(f"Warning: Could not parse content variable value '{content_var_value}' for indicator {indicator.name}")
+                            value_index = 0
+                    else:
+                        # Fallback: try to find content variable mapping in other ways
                         for var_code, var_value in keys.items():
                             if var_code not in column_codes and var_code not in ["QUARTER", "MONTH", "YEAR"]:
-                                # Check if the var_value (which should be an index) matches any content variable position
                                 try:
                                     expected_index = int(var_value)
                                     if 0 <= expected_index < len(content_variable_order):
-                                        content_variable_code = var_code
                                         value_index = expected_index
+                                        print(f"Fallback: Using content variable index {value_index} for indicator {indicator.name}")
                                         break
                                 except (ValueError, TypeError):
                                     continue
@@ -232,7 +266,6 @@ def execute_cystat_request(cystat_request_id):
                                 'new_value': str(dec_value)
                             }
                             indicator_changes.setdefault(mapping.indicator.id, []).append(change)
-                        break
 
             # Now create one ActionLog per indicator with all its changes
             for indicator_id, changes in indicator_changes.items():
