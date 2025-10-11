@@ -289,6 +289,10 @@ def get_available_fields(request):
 def boolean_filter(request):
     try:
         if request.method == 'POST':
+            user = get_user(request)
+            if not user:
+                return JsonResponse({'error': 'User not authenticated'}, status=401)
+
             search_data = json.loads(request.body)
             base= search_data.get('base')
             # add boolean to base
@@ -298,7 +302,7 @@ def boolean_filter(request):
             fields.insert(0, base)
             print(fields)
             grouped_results = {}
-            allowed_indicators = get_accessible_indicators(get_user(request))
+            allowed_indicators = get_accessible_indicators(user)
             # fields include a field denoted as model_name__field_name called field a value, which corresponds to the search term matching the field and boolean operator which is how different search criteria are combined
             # boolean operator can be AND, OR or NOT (NOT is basically AND NOT)
             # for example if fields is [{'field': 'indicator__name', 'value': 'Nikkei', 'boolean_operator': ''}, {'field': 'indicator__source', 'value': 'European Central Bank', 'boolean_operator': 'OR'}]
